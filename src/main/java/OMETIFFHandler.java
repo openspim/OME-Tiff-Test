@@ -22,24 +22,14 @@ public class OMETIFFHandler {
 	private int imageCounter, sliceCounter;
 	private IFormatWriter writer;
 
-	public interface CMMCore {
-		public abstract long getImageBitDepth();
-
-		public abstract long getImageWidth();
-
-		public abstract long getImageHeight();
-
-		public abstract double getPixelSizeUm();
-		
-		public abstract void delete();
-	}
-
-	private CMMCore core;
 	private int stacks, timesteps;
 	private AcqRow[] acqRows;
 	private double deltat;
+
+	private final int imageBitDepth;
 	
-	public OMETIFFHandler(CMMCore iCore, File outDir, AcqRow[] acqRows,
+	public OMETIFFHandler(int imageBitDepth, int imageWidth, int imageHeight,
+	double pixelSizeUm, File outDir, AcqRow[] acqRows,
 			int iTimeSteps, double iDeltaT) {
 
 		if(outDir == null || !outDir.exists() || !outDir.isDirectory())
@@ -48,8 +38,9 @@ public class OMETIFFHandler {
 		imageCounter = -1;
 		sliceCounter = 0;
 
+		this.imageBitDepth = imageBitDepth;
+
 		stacks = acqRows.length;
-		core = iCore;
 		timesteps = iTimeSteps;
 		deltat = iDeltaT;
 		outputDirectory = outDir;
@@ -71,7 +62,7 @@ public class OMETIFFHandler {
 				meta.setPixelsID(MetadataTools.createLSID("Pixels", 0), image);
 				meta.setPixelsDimensionOrder(DimensionOrder.XYCZT, image);
 				meta.setPixelsBinDataBigEndian(Boolean.FALSE, image, 0);
-				meta.setPixelsType(core.getImageBitDepth() == 8 ? PixelType.UINT8 : PixelType.UINT16, image);
+				meta.setPixelsType(imageBitDepth == 8 ? PixelType.UINT8 : PixelType.UINT16, image);
 				meta.setChannelID(MetadataTools.createLSID("Channel", 0), image, 0);
 				meta.setChannelSamplesPerPixel(new PositiveInteger(1), image, 0);
 
@@ -90,14 +81,14 @@ public class OMETIFFHandler {
 					}
 				}
 
-				meta.setPixelsSizeX(new PositiveInteger((int)core.getImageWidth()), image);
-				meta.setPixelsSizeY(new PositiveInteger((int)core.getImageHeight()), image);
+				meta.setPixelsSizeX(new PositiveInteger(imageWidth), image);
+				meta.setPixelsSizeY(new PositiveInteger(imageHeight), image);
 				meta.setPixelsSizeZ(new PositiveInteger(depth), image);
 				meta.setPixelsSizeC(new PositiveInteger(1), image);
 				meta.setPixelsSizeT(new PositiveInteger(timesteps), image);
 
-				meta.setPixelsPhysicalSizeX(new PositiveFloat(core.getPixelSizeUm()*core.getImageWidth()), image);
-				meta.setPixelsPhysicalSizeY(new PositiveFloat(core.getPixelSizeUm()*core.getImageHeight()), image);
+				meta.setPixelsPhysicalSizeX(new PositiveFloat(pixelSizeUm * imageWidth), image);
+				meta.setPixelsPhysicalSizeY(new PositiveFloat(pixelSizeUm * imageHeight), image);
 				meta.setPixelsPhysicalSizeZ(new PositiveFloat(1d), image);
 				meta.setPixelsTimeIncrement(new Double(deltat), image);
 			}
@@ -107,7 +98,7 @@ public class OMETIFFHandler {
 			writer.setWriteSequentially(true);
 			writer.setMetadataRetrieve(meta);
 			writer.setInterleaved(false);
-			writer.setValidBitsPerPixel((int) core.getImageBitDepth());
+			writer.setValidBitsPerPixel(imageBitDepth);
 			writer.setCompression("Uncompressed");
 		} catch(Throwable t) {
 			t.printStackTrace();
@@ -147,7 +138,7 @@ public class OMETIFFHandler {
 
 	public void processSlice(ImageProcessor ip, double X, double Y, double Z, double theta, double deltaT)
 			throws Exception {
-		long bitDepth = core.getImageBitDepth();
+		long bitDepth = imageBitDepth;
 		byte[] data = bitDepth == 8 ?
 			(byte[])ip.getPixels() :
 			DataTools.shortsToBytes((short[])ip.getPixels(), true);

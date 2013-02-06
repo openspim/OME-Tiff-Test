@@ -6,47 +6,10 @@ import ij.process.ShortProcessor;
 
 
 public class OMETiffWriterTest implements PlugIn {
-	private static long WIDTH = 512;
-	private static long HEIGHT = 384;
-	private static long BITDEPTH = 10;
+	private static int WIDTH = 512;
+	private static int HEIGHT = 384;
+	private static int BITDEPTH = 10;
 	private static double UMPERPIX = (10D / 23D);
-
-	// Hopefully this doesn't do anything horrible.
-	// EDIT: Well, this does something horrible. :(
-	private class mockCore implements OMETIFFHandler.CMMCore {
-		mockCore() {
-		}
-		@Override
-		public long getImageBitDepth() {
-			return BITDEPTH;
-		}
-
-		@Override
-		public long getImageWidth() {
-			return WIDTH;
-		}
-
-		@Override
-		public long getImageHeight() {
-			return HEIGHT;
-		}
-
-		@Override
-		public double getPixelSizeUm() {
-			return UMPERPIX;
-		}
-
-		@Override
-		public void delete() {
-			// do nothing
-		}
-	}
-
-	private mockCore core;
-
-	public OMETiffWriterTest() {
-		core = new mockCore();
-	}
 
 	@Override
 	public void run(String arg) {
@@ -75,7 +38,7 @@ public class OMETiffWriterTest implements PlugIn {
 			rows[xyt] = new AcqRow(new String[] {"Picard XY Stage", "Picard Twister", "t"},
 					"Picard Stage", "1:1:" + depth);
 
-		OMETIFFHandler handler = new OMETIFFHandler(core, outDir, rows, timePoints, 13);
+		OMETIFFHandler handler = new OMETIFFHandler(BITDEPTH, WIDTH, HEIGHT, UMPERPIX, outDir, rows, timePoints, 13);
 
 		long millis = System.currentTimeMillis();
 
@@ -115,15 +78,13 @@ public class OMETiffWriterTest implements PlugIn {
 			ij.IJ.handleException(e);
 		}
 
-		core.delete();
-
 		ij.IJ.log("Finished writing OME-TIFFs.");
 
 		ij.IJ.run("Bio-Formats");
 	}
 
 	private static ImageProcessor makeSlice(int v, int t, int z, long millis) {
-		final ImageProcessor result = new ShortProcessor((int) WIDTH, (int) HEIGHT);
+		final ImageProcessor result = new ShortProcessor(WIDTH, HEIGHT);
 
 		// make a gradient
 		double angle = z * Math.PI / BITDEPTH;
@@ -132,13 +93,13 @@ public class OMETiffWriterTest implements PlugIn {
 		short[] pixels = (short[])result.getPixels();
 		for (int y = 0; y < HEIGHT; y++) {
 			  for (int x = 0; x < WIDTH; x++) {
-				int dx = (int) (x - WIDTH / 2);
-				int dy = (int) (y - HEIGHT / 2);
+				int dx = x - WIDTH / 2;
+				int dy = y - HEIGHT / 2;
 				double alpha = Math.atan2(dy, dx) - angle;
 				if (alpha < 0) alpha += 2 * Math.PI;
 				else if (alpha >= 2 * Math.PI) alpha -= 2 * Math.PI;
 				double value = min + (max - min) * alpha / 2 / Math.PI;
-				pixels[(int) (x + WIDTH * y)] = (short)(int)value;
+				pixels[x + WIDTH * y] = (short)(int)value;
 			  }
 		}
 		// write time and z as text
