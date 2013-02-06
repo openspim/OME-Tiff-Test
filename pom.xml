@@ -39,6 +39,11 @@
 			<artifactId>bio-formats</artifactId>
 			<version>4.5-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>loci</groupId>
+			<artifactId>loci_plugins</artifactId>
+			<version>4.5-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<developers>
