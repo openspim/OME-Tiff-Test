@@ -1,6 +1,7 @@
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImageJ;
+import ij.ImagePlus;
 import ij.Menus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
@@ -136,6 +137,27 @@ public class OMETiffWriterTest implements PlugIn {
 		IJ.run("Bio-Formats", "autoscale display_metadata display_ome-xml open=["
 			+ new File(outDir, "spim_TL01_Angle0.ome.tiff").getAbsolutePath()
 			+ "] color_mode=Default view=Hyperstack stack_order=XYCZT" + series);
+
+		int errors = 0;
+		int count = WindowManager.getImageCount();
+		if (count != stacks) {
+			IJ.log("Expected " + stacks + " images, but got only " + count);
+			errors++;
+		}
+		if (count > 0) {
+			ImagePlus first = WindowManager.getImage(1);
+			if (depth != first.getNSlices()) {
+				IJ.log("Expected " + depth + " slices but got " + first.getNSlices());
+				errors++;
+			}
+			if (timePoints != first.getNFrames()) {
+				IJ.log("Expected " + timePoints + " frames but got " + first.getNFrames());
+				errors++;
+			}
+		}
+		if (errors == 0) {
+			IJ.log("No errors found!");
+		}
 	}
 
 	private static ImageProcessor makeSlice(int v, int t, int z, long millis) {
