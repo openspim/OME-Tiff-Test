@@ -16,23 +16,30 @@ public class OMETiffWriterTest implements PlugIn {
 	private class mockCore implements OMETIFFHandler.CMMCore {
 		mockCore() {
 		}
+		@Override
 		public long getImageBitDepth() {
 			return BITDEPTH;
 		}
 
+		@Override
 		public long getImageWidth() {
 			return WIDTH;
 		}
 
+		@Override
 		public long getImageHeight() {
 			return HEIGHT;
 		}
 
+		@Override
 		public double getPixelSizeUm() {
 			return UMPERPIX;
 		}
 
-		public void delete() {}
+		@Override
+		public void delete() {
+			// do nothing
+		}
 	}
 
 	private mockCore core;
@@ -68,7 +75,7 @@ public class OMETiffWriterTest implements PlugIn {
 			rows[xyt] = new AcqRow(new String[] {"Picard XY Stage", "Picard Twister", "t"},
 					"Picard Stage", "1:1:" + depth);
 
-		OMETIFFHandler handler = new OMETIFFHandler(core, outDir, "Picard XY Stage", "Picard Twister", "Picard Stage", "t", rows, timePoints, 13);
+		OMETIFFHandler handler = new OMETIFFHandler(core, outDir, rows, timePoints, 13);
 
 		long millis = System.currentTimeMillis();
 

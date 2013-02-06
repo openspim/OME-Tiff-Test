@@ -3,7 +3,7 @@ public class AcqRow {
 		SINGLE_POSITION,
 		STEPPED_RANGE,
 		CONTINUOUS_SWEEP
-	};
+	}
 	
 	private ZMode mode;
 	private String[] mainPositions;
@@ -59,8 +59,7 @@ public class AcqRow {
 	public int getDepth() {
 		if(mode == ZMode.SINGLE_POSITION)
 			return 1;
-		else
-			return (int) ((end - start) / stepOrSpeed) + 1;
+		return (int) ((end - start) / stepOrSpeed) + 1;
 	}
 
 	public double getX() {

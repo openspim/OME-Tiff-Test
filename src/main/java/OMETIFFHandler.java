@@ -1,18 +1,14 @@
-import java.io.File;
-
-import ij.ImagePlus;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
+
+import java.io.File;
 
 import loci.common.DataTools;
 import loci.common.services.ServiceFactory;
-
 import loci.formats.IFormatWriter;
 import loci.formats.ImageWriter;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
-
 import ome.xml.model.enums.DimensionOrder;
 import ome.xml.model.enums.PixelType;
 import ome.xml.model.primitives.NonNegativeInteger;
@@ -43,12 +39,11 @@ public class OMETIFFHandler {
 	private AcqRow[] acqRows;
 	private double deltat;
 	
-	public OMETIFFHandler(CMMCore iCore, File outDir, String xyDev,
-			String cDev, String zDev, String tDev, AcqRow[] acqRows,
+	public OMETIFFHandler(CMMCore iCore, File outDir, AcqRow[] acqRows,
 			int iTimeSteps, double iDeltaT) {
 
 		if(outDir == null || !outDir.exists() || !outDir.isDirectory())
-			throw new IllegalArgumentException("Null path specified: " + outDir.toString());
+			throw new IllegalArgumentException("Null path specified: " + outDir);
 
 		imageCounter = -1;
 		sliceCounter = 0;
@@ -92,8 +87,8 @@ public class OMETIFFHandler {
 						meta.setTiffDataFirstT(new NonNegativeInteger(t), image, td);
 						meta.setTiffDataFirstC(new NonNegativeInteger(0), image, td);
 						meta.setTiffDataFirstZ(new NonNegativeInteger(z), image, td);
-					};
-				};
+					}
+				}
 
 				meta.setPixelsSizeX(new PositiveInteger((int)core.getImageWidth()), image);
 				meta.setPixelsSizeY(new PositiveInteger((int)core.getImageHeight()), image);
@@ -130,11 +125,6 @@ public class OMETIFFHandler {
 		meta.setUUID(meta.getUUIDValue(angleIndex, acqRows[angleIndex].getDepth()*timepoint));
 
 		sliceCounter = 0;
-	}
-
-	public ImagePlus getImagePlus() throws Exception {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	public void beginStack(int axis) throws Exception {
