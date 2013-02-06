@@ -1,11 +1,16 @@
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.ImageJ;
+import ij.Menus;
+import ij.WindowManager;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Hashtable;
 
 
 public class OMETiffWriterTest implements PlugIn {
@@ -110,9 +115,27 @@ public class OMETiffWriterTest implements PlugIn {
 			ij.IJ.handleException(e);
 		}
 
-		ij.IJ.log("Finished writing OME-TIFFs.");
+		IJ.log("Finished writing OME-TIFFs.");
 
-		ij.IJ.run("Bio-Formats");
+		String series = "";
+		for (int i = 1; i <= stacks; i++) {
+			series += " series_" + i;
+		}
+
+		// force IJ.init() to be run
+		if (IJ.getInstance() == null) {
+			new ImageJ();
+		}
+
+		@SuppressWarnings("unchecked")
+		Hashtable<String, String> commands = Menus.getCommands();
+		if (commands.get("Bio-Formats") == null) {
+			commands.put("Bio-Formats", "loci.plugins.LociImporter(\"location=[Local machine] windowless=false \")");
+		}
+
+		IJ.run("Bio-Formats", "autoscale display_metadata display_ome-xml open=["
+			+ new File(outDir, "spim_TL01_Angle0.ome.tiff").getAbsolutePath()
+			+ "] color_mode=Default view=Hyperstack stack_order=XYCZT" + series);
 	}
 
 	private static ImageProcessor makeSlice(int v, int t, int z, long millis) {
