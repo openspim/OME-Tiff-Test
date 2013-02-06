@@ -1,8 +1,11 @@
-import java.io.File;
-
+import fiji.util.gui.GenericDialogPlus;
+import ij.IJ;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+
+import java.io.File;
+import java.io.IOException;
 
 
 public class OMETiffWriterTest implements PlugIn {
@@ -13,25 +16,54 @@ public class OMETiffWriterTest implements PlugIn {
 
 	@Override
 	public void run(String arg) {
-		String[] args = arg.split(" ");
-
-		if(args.length < 5) {
-			args = new String[] {
-				"OMETIFFHandler.java",
-				"2",
-				"5",
-				"2",
-				"C:\\Documents and Settings\\LOCI\\Desktop\\handlertest\\output"
-			};
+		if (arg != null) {
+			String[] args = arg.split(" ");
+			if (args.length == 4) {
+				try {
+					main(args);
+				} catch (IOException e) {
+					IJ.handleException(e);
+				}
+				return;
+			}
 		}
 
-		int stacks = Integer.parseInt(args[1]);
-		int depth = Integer.parseInt(args[2]);
-		int timePoints = Integer.parseInt(args[3]);
+		GenericDialogPlus gd = new GenericDialogPlus("OME-Tiff Writer test");
+		gd.addNumericField("stacks", 2, 0);
+		gd.addNumericField("depth", 5, 0);
+		gd.addNumericField("time_points", 2, 0);
+		gd.addFileField("output_directory", new File(IJ.getDirectory("imagej"), "test-output").getAbsolutePath());
+		gd.showDialog();
+		if (gd.wasCanceled()) {
+			return;
+		}
 
-		File outDir = new File(args[4]);
+		int stacks = (int)gd.getNextNumber();
+		int depth = (int)gd.getNextNumber();
+		int timePoints = (int)gd.getNextNumber();
+
+		File outDir = new File(gd.getNextString());
+
+		run(stacks, depth, timePoints, outDir);
+	}
+
+	public static void main(String[] args) throws IOException {
+		int stacks = args.length < 1 ? 2 : Integer.parseInt(args[0]);
+		int depth = args.length < 2 ? 5 : Integer.parseInt(args[1]);
+		int timePoints = args.length < 3 ? 2 : Integer.parseInt(args[2]);
+		File outDir;
+		if (args.length < 4) {
+			outDir = File.createTempFile("test-output", "");
+			outDir.delete();
+		} else {
+			outDir = new File(args[3]);
+		}
+		run(stacks, depth, timePoints, outDir);
+	}
+
+	public static void run(int stacks, int depth, int timePoints, File outDir) {
 		if(!outDir.exists() && !outDir.mkdirs())
-			throw new Error("Couldn't mkdir.");
+			throw new RuntimeException("Couldn't make directory " + outDir);
 
 		AcqRow[] rows = new AcqRow[stacks];
 		for(int xyt=0; xyt < stacks; ++xyt)

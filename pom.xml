@@ -25,6 +25,11 @@
 			<version>${imagej1.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-lib</artifactId>
+			<version>${imagej.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>loci</groupId>
 			<artifactId>scifio</artifactId>
 			<version>4.5-SNAPSHOT</version>
