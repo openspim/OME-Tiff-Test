@@ -15,8 +15,7 @@
 	<artifactId>OMETiffWriterTest_</artifactId>
 	<version>1.0.0</version>
 
-	<name>plugins/OMETiffWriterTest.jar</name>
-	<description>A Maven project implementing an ImageJ 1.x plugin</description>
+	<name>plugins/OMETiffWriterTest_.jar</name>
 
 	<dependencies>
 		<dependency>
@@ -81,4 +80,5 @@
 		<url>https://github.com/imagej/minimal-ij1-plugin</url>
 	</scm>
 
+	<description>A test of the OME-TIFF writing ala the OpenSPIM plugin for Micro-Manager; designed to demonstrate flaws in the current scifio jar.</description>
 </project>

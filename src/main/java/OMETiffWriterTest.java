@@ -79,6 +79,7 @@ public class OMETiffWriterTest implements PlugIn {
 		OMETIFFHandler handler = new OMETIFFHandler(BITDEPTH, WIDTH, HEIGHT, UMPERPIX, outDir, rows, timePoints, 13);
 
 		long millis = System.currentTimeMillis();
+		long maxdt = -1;
 
 		for(int t=0; t < timePoints; ++t) {
 			for(int xyt=0; xyt < stacks; ++xyt) {
@@ -93,6 +94,9 @@ public class OMETiffWriterTest implements PlugIn {
 					long now = System.currentTimeMillis();
 					try {
 						final ImageProcessor ip = makeSlice(xyt, t, z, now - millis);
+						if(now - millis > maxdt)
+							maxdt = now - millis;
+
 						millis = System.currentTimeMillis();
 						handler.processSlice(ip, 0, 0, z, xyt, t);
 					} catch(Exception e) {
@@ -118,6 +122,9 @@ public class OMETiffWriterTest implements PlugIn {
 
 		IJ.log("Finished writing OME-TIFFs.");
 
+		// We can't assume the user has no images open...
+		int oldCount = WindowManager.getImageCount();
+
 		String series = "";
 		for (int i = 1; i <= stacks; i++) {
 			series += " series_" + i;
@@ -140,20 +147,40 @@ public class OMETiffWriterTest implements PlugIn {
 
 		int errors = 0;
 		int count = WindowManager.getImageCount();
-		if (count != stacks) {
-			IJ.log("Expected " + stacks + " images, but got only " + count);
+		if (count - oldCount != stacks) {
+			IJ.log("Expected " + stacks + " images, but got only " + (count - oldCount));
 			errors++;
 		}
-		if (count > 0) {
-			ImagePlus first = WindowManager.getImage(1);
-			if (depth != first.getNSlices()) {
-				IJ.log("Expected " + depth + " slices but got " + first.getNSlices());
-				errors++;
+		if (count > oldCount) {
+			for(int i=oldCount+1; i <= count; ++i) {
+				ImagePlus img = WindowManager.getImage(i);
+				if	(img == null) {
+					IJ.log("Image " + i + " was null!");
+					++errors;
+				} else {
+					if (depth != img.getNSlices()) {
+						IJ.log(String.format("Image %d: Expected %d slices but got %d.",i-oldCount,depth,img.getNSlices()));
+						errors++;
+					}
+					if (timePoints != img.getNFrames()) {
+						IJ.log(String.format("Image %d: Expected %d frames but got %d.",i-oldCount,timePoints,img.getNFrames()));
+						errors++;
+					}
+
+					for(int t=0; t < img.getNFrames(); ++t) {
+						for(int z=0; z < img.getNSlices(); ++z) {
+							if(img.getStack().getProcessor(img.getStackIndex(1, z, t)).getMax() == 0) {
+								IJ.log(String.format("Image %d, timepoint %d, slice %d: Blank frame!", i, t, z));
+								++errors;
+							}
+						}
+					}
+				}
 			}
-			if (timePoints != first.getNFrames()) {
-				IJ.log("Expected " + timePoints + " frames but got " + first.getNFrames());
-				errors++;
-			}
+		}
+		if(maxdt > 1e5) {
+			IJ.log("Maximum time to write a slice was > 10s!");
+			++errors;
 		}
 		if (errors == 0) {
 			IJ.log("No errors found!");
